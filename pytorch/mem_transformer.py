@@ -8,6 +8,8 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
+import ipdb
+
 sys.path.append('utils')
 from proj_adaptive_softmax import ProjectedAdaptiveLogSoftmax
 from log_uniform_sampler import LogUniformSampler, sample_logits
@@ -559,7 +561,7 @@ class MemTransformerLM(nn.Module):
 
         # use adaptive softmax (including standard softmax)
         else:
-            self.crit = ProjectedAdaptiveLogSoftmax(n_token, d_embed, d_model, 
+            self.crit = ProjectedAdaptiveLogSoftmax(n_token, d_embed, d_model,
                                                     cutoffs, div_val=div_val)
 
             if tie_weight:

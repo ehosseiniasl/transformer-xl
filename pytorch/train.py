@@ -16,6 +16,10 @@ from mem_transformer import MemTransformerLM
 from utils.exp_utils import create_exp_dir
 from utils.data_parallel import BalancedDataParallel
 
+
+import ipdb
+
+
 parser = argparse.ArgumentParser(description='PyTorch Transformer Language Model')
 parser.add_argument('--data', type=str, default='../data/wikitext-103',
                     help='location of the data corpus')
@@ -102,7 +106,7 @@ parser.add_argument('--multi_gpu', action='store_true',
                     help='use multiple GPU')
 parser.add_argument('--log-interval', type=int, default=200,
                     help='report interval')
-parser.add_argument('--eval-interval', type=int, default=4000,
+parser.add_argument('--eval-interval', type=int, default=10,
                     help='evaluation interval')
 parser.add_argument('--work_dir', default='LM-TFM', type=str,
                     help='experiment directory.')
@@ -185,6 +189,7 @@ corpus = get_lm_corpus(args.data, args.dataset)
 ntokens = len(corpus.vocab)
 args.n_token = ntokens
 
+ipdb.set_trace()
 eval_batch_size = 10
 tr_iter = corpus.get_iterator('train', args.batch_size, args.tgt_len,
     device=device, ext_len=args.ext_len)
@@ -218,6 +223,7 @@ def init_bias(bias):
 
 def weights_init(m):
     classname = m.__class__.__name__
+    ipdb.set_trace()
     if classname.find('Linear') != -1:
         if hasattr(m, 'weight') and m.weight is not None:
             init_weight(m.weight)
@@ -401,6 +407,7 @@ def evaluate(eval_iter):
     with torch.no_grad():
         mems = tuple()
         for i, (data, target, seq_len) in enumerate(eval_iter):
+            start_time = time.time()
             if args.max_eval_steps > 0 and i >= args.max_eval_steps:
                 break
             ret = model(data, target, *mems)
@@ -408,6 +415,10 @@ def evaluate(eval_iter):
             loss = loss.mean()
             total_loss += seq_len * loss.float().item()
             total_len += seq_len
+            stop_time = time.time()
+
+            if mems:
+                print(f"[{i}/{eval_iter.n_batch}] input {data.shape}, mem {mems[0].shape}, time {stop_time - start_time}")
 
     # Switch back to the training mode
     model.reset_length(args.tgt_len, args.ext_len, args.mem_len)
